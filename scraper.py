@@ -12,7 +12,6 @@ driver = webdriver.Chrome(options=options)
 driver.get("https://www.vandb.fr/biere?page=1")
 
 try:
-    # Attendre jusqu'à 10 secondes que les éléments soient présents
     WebDriverWait(driver, 10).until(
         EC.presence_of_all_elements_located((By.CSS_SELECTOR, "a.product-list-item__content"))
     )
