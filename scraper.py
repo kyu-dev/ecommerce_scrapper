@@ -8,12 +8,9 @@ from bs4 import BeautifulSoup
 options = Options()
 options.headless = True
 
-driver = webdriver.Chrome(options=options)
-
-
-
 
 def get_products_links(page):
+    driver = webdriver.Chrome(options=options)
     driver.get(f"https://www.vandb.fr/biere?page={page}")
     WebDriverWait(driver, 10).until(
     EC.presence_of_all_elements_located((By.CSS_SELECTOR, "a.product-list-item__content"))
