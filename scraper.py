@@ -9,11 +9,14 @@ options = Options()
 options.headless = True
 
 driver = webdriver.Chrome(options=options)
-driver.get("https://www.vandb.fr/biere?page=1")
 
-try:
+
+
+
+def get_products_links(page):
+    driver.get(f"https://www.vandb.fr/biere?page={page}")
     WebDriverWait(driver, 10).until(
-        EC.presence_of_all_elements_located((By.CSS_SELECTOR, "a.product-list-item__content"))
+    EC.presence_of_all_elements_located((By.CSS_SELECTOR, "a.product-list-item__content"))
     )
 
     html = driver.page_source
@@ -21,11 +24,15 @@ try:
 
     links = []
     for product in soup.select("a.product-list-item__content[href]"):
-        href = product['href']
-        full_url = "https://www.vandb.fr" + href
-        links.append(full_url)
+            href = product['href']
+            full_url = "https://www.vandb.fr" + href
+            links.append(full_url)
 
     print(links)
+    driver.quit()  
 
-finally:
-    driver.quit()
+
+get_products_links(2)
+
+    
+   
