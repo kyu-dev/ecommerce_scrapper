@@ -216,12 +216,17 @@ def scrape_all_products(start_page=1, end_page=3):
         "Saison": 13
     }
     volume_map = {
-        "25 cl": 1,
-        "33 cl": 2,
-        "50 cl": 3,
-        "75 cl": 4,
-        "1 l": 5,
-    }
+    "25 cl": 1,
+    "33 cl": 2,
+    "44 cl": 3,
+    "50 cl": 4,
+    "75 cl": 5,
+    "1 l": 6,
+    "1,5 l": 7,
+    "0.33 l": 2, 
+    "0.5 l": 4,   
+    "0.75 l": 5  
+}
     # Récupérer tous les liens des produits de toutes les pages
     links = []
     for page in range(start_page, end_page + 1):
