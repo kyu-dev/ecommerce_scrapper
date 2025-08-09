@@ -198,7 +198,7 @@ def get_data_products(page):
     driver.quit()
     return product_data
 
-def scrape_all_products(num_products=5):
+def scrape_all_products(start_page=1, end_page=3):
     # Dictionnaires de correspondance pour les catégories et volumes
     category_map = {
         "Blonde": 1,
@@ -221,32 +221,33 @@ def scrape_all_products(num_products=5):
         "50 cl": 3,
         "75 cl": 4,
         "1 l": 5,
-        "0.33 l": 2,
-        "0.5 l": 3,
-        "0.75 l": 4
     }
-    # Récupérer tous les liens des produits
-    driver = webdriver.Chrome(options=options)
-    driver.get(f"https://www.vandb.fr/biere?page=1")
-    WebDriverWait(driver, 10).until(
-        EC.presence_of_all_elements_located((By.CSS_SELECTOR, "a.product-list-item__content"))
-    )
-
-    html = driver.page_source
-    soup = BeautifulSoup(html, "html.parser")
-
+    # Récupérer tous les liens des produits de toutes les pages
     links = []
-    for product in soup.select("a.product-list-item__content[href]"):
-        href = product['href']
-        full_url = "https://www.vandb.fr" + href
-        links.append(full_url)
-    
-    driver.quit()
+    for page in range(start_page, end_page + 1):
+        print(f"\n📃 Récupération des liens de la page {page}...")
+        driver = webdriver.Chrome(options=options)
+        driver.get(f"https://www.vandb.fr/biere?page={page}")
+        WebDriverWait(driver, 10).until(
+            EC.presence_of_all_elements_located((By.CSS_SELECTOR, "a.product-list-item__content"))
+        )
+
+        html = driver.page_source
+        soup = BeautifulSoup(html, "html.parser")
+
+        for product in soup.select("a.product-list-item__content[href]"):
+            href = product['href']
+            full_url = "https://www.vandb.fr" + href
+            links.append(full_url)
+        
+        driver.quit()
+        print(f"✅ {len(links)} produits trouvés jusqu'à présent")
     
     # Récupérer les données pour chaque produit
     all_products_data = []
-    for i, link in enumerate(links[:num_products]):
-        print(f"Récupération des données pour le produit {i+1}/{num_products}: {link}")
+    total_products = len(links)
+    for i, link in enumerate(links):
+        print(f"Récupération des données pour le produit {i+1}/{total_products}: {link}")
         try:
             product_data = get_data_products(link)
             cat_id = category_map.get(product_data.get("categorie", ""), 0)
@@ -275,9 +276,9 @@ def scrape_all_products(num_products=5):
     print(f"📊 Total: {len(all_products_data)} produits récupérés")
     return all_products_data
 
-# Test avec quelques produits
+# Test avec les 3 premières pages
 if __name__ == "__main__":
-    scrape_all_products(5)
+    scrape_all_products(1, 3)
 
 
 
