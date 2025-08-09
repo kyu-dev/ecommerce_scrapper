@@ -1,3 +1,4 @@
+
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
@@ -6,6 +7,11 @@ from selenium.webdriver.support import expected_conditions as EC
 from bs4 import BeautifulSoup
 import json
 import re
+import random
+
+def random_rating():
+    """Retourne un float aléatoire entre 2.5 et 5.0 arrondi à 1 décimale."""
+    return round(random.uniform(2.5, 5.0), 1)
 
 options = Options()
 options.headless = True
@@ -42,7 +48,14 @@ def get_data_products(page):
     html = driver.page_source
     soup = BeautifulSoup(html, "html.parser")
 
-    product_data = {}
+    product_data = {
+        'nom': "Non trouvé",
+        'description': "Non trouvé",
+        'degre_alcool': "0",
+        'image': "Non trouvé",
+        'categorie': "Non trouvé",
+        'quantite': "Non trouvé"
+    }
     
     # Récupérer le nom du produit
     name_element = soup.select_one("h1")
@@ -63,8 +76,6 @@ def get_data_products(page):
         if image_src.startswith('/'):
             image_src = "https://www.vandb.fr" + image_src
         product_data['image'] = image_src
-    else:
-        product_data['image'] = "Non trouvé"
     
     # Récupérer la description
     description_element = soup.select_one(".product-detail__description, .product-description, .description")
@@ -73,9 +84,6 @@ def get_data_products(page):
     product_data['description'] = description_element.get_text(strip=True) if description_element else "Non trouvé"
     
     # Récupérer le degré d'alcool
-    product_data['degre_alcool'] = "Non trouvé"
-    
-    # 1. Chercher dans la section spécifications (classe spécifique)
     specs_section = soup.select_one(".product-custom-block.product-specification.full--yellow")
     if specs_section:
         specs_text = specs_section.get_text()
@@ -191,6 +199,32 @@ def get_data_products(page):
     return product_data
 
 def scrape_all_products(num_products=5):
+    # Dictionnaires de correspondance pour les catégories et volumes
+    category_map = {
+        "Blonde": 1,
+        "Brune": 2,
+        "Blanche": 3,
+        "Rousse": 4,
+        "Ambrée": 5,
+        "IPA": 6,
+        "Pils": 7,
+        "Stout": 8,
+        "Porter": 9,
+        "Weizen": 10,
+        "Berliner": 11,
+        "Triple": 12,
+        "Saison": 13
+    }
+    volume_map = {
+        "25 cl": 1,
+        "33 cl": 2,
+        "50 cl": 3,
+        "75 cl": 4,
+        "1 l": 5,
+        "0.33 l": 2,
+        "0.5 l": 3,
+        "0.75 l": 4
+    }
     # Récupérer tous les liens des produits
     driver = webdriver.Chrome(options=options)
     driver.get(f"https://www.vandb.fr/biere?page=1")
@@ -215,19 +249,30 @@ def scrape_all_products(num_products=5):
         print(f"Récupération des données pour le produit {i+1}/{num_products}: {link}")
         try:
             product_data = get_data_products(link)
-            product_data['url'] = link
-            all_products_data.append(product_data)
-            print(f"✅ Données récupérées: {product_data['nom']}")
+            cat_id = category_map.get(product_data.get("categorie", ""), 0)
+            vol_id = volume_map.get(product_data.get("quantite", ""), 0)
+            produit = {
+                "name": product_data.get("nom", "Non trouvé"),
+                "description": product_data.get("description", "Non trouvé"),
+                "price": 9.99,  # valeur par défaut
+                "stock": 100,    # valeur par défaut
+                "alcoholDegree": float(product_data.get("degre_alcool", "0").replace("%", "").replace(",", ".") or 0),
+                "img": product_data.get("image", "Non trouvé"),
+                "categoryId": cat_id,
+                "rating": random_rating(),
+                "volumeId": vol_id
+            }
+            all_products_data.append(produit)
+            print(f"✅ Données récupérées: {produit['name']}")
         except Exception as e:
             print(f"❌ Erreur lors de la récupération de {link}: {e}")
-    
-    # Sauvegarder les données dans un fichier JSON
+
+    # Sauvegarder les données dans un fichier JSON au format demandé
     with open('products_data.json', 'w', encoding='utf-8') as f:
-        json.dump(all_products_data, f, ensure_ascii=False, indent=2)
-    
-    print(f"\n📁 Données sauvegardées dans 'products_data.json'")
+        json.dump({"products": all_products_data}, f, ensure_ascii=False, indent=2)
+
+    print(f"\n📁 Données sauvegardées dans 'products_data.json' (format custom)")
     print(f"📊 Total: {len(all_products_data)} produits récupérés")
-    
     return all_products_data
 
 # Test avec quelques produits
